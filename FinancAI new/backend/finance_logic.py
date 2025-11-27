@@ -1,72 +1,82 @@
-import numpy as np
+# backend/scoring.py
 
-def calculate_budget(income, rent, utilities, transport, debt, mode):
-    # 1. Basic fixed expenses
-    fixed_expenses = rent + utilities + transport
+def safe_div(a, b):
+    try:
+        return a / b if b else 0.0
+    except Exception:
+        return 0.0
 
-    # 2. Money left after fixed expenses + minimum debt
-    disposable = income - fixed_expenses - debt
-    if disposable < 0:
-        disposable = 0
+def clamp(v, lo, hi):
+    return max(lo, min(hi, v))
 
-    # 3. Savings by mode
-    mode = mode.lower()
-    if mode == "super budget" or mode == "super":
-        savings_rate = 0.50   # save as much as possible
-    elif mode == "relaxed":
-        savings_rate = 0.10   # enjoy more, save less
+def percent(x):
+    return x * 100.0
+
+def round2(x):
+    return round(x, 2)
+
+def compute_financial_score(payload):
+    income = float(payload.get("monthly_income", 0) or 0)
+    fixed = float(payload.get("fixed_expenses", 0) or 0)
+    variable = float(payload.get("variable_expenses", 0) or 0)
+    debt_payment = float(payload.get("debt_monthly_payment", 0) or 0)
+    debt_balance = float(payload.get("debt_total_balance", 0) or 0)
+    savings_monthly = float(payload.get("savings_monthly", 0) or 0)
+    savings_total = float(payload.get("savings_total", 0) or 0)
+    emergency_target = float(payload.get("emergency_months_target", 3) or 3)
+
+    savings_rate = safe_div(savings_monthly, income)
+    debt_to_income = safe_div(debt_payment, income)
+    housing_pct = safe_div(fixed, income)
+    emergency_months = safe_div(savings_total, max(1.0, fixed + variable))
+
+    savings_rate_score = clamp((savings_rate / 0.20) * 100, 0, 100)
+
+    if debt_to_income <= 0.10:
+        debt_score = 100
+    elif debt_to_income >= 0.40:
+        debt_score = 0
     else:
-        savings_rate = 0.25   # default “normal” case
+        debt_score = (1 - (debt_to_income - 0.10) / 0.30) * 100
+    debt_score = clamp(debt_score, 0, 100)
 
-    suggested_savings = disposable * savings_rate
-    spending_budget = disposable - suggested_savings
+    if housing_pct <= 0.30:
+        housing_score = 100
+    elif housing_pct >= 0.50:
+        housing_score = 0
+    else:
+        housing_score = (1 - (housing_pct - 0.30) / 0.20) * 100
+    housing_score = clamp(housing_score, 0, 100)
+
+    if emergency_months >= emergency_target:
+        emergency_score = 100
+    else:
+        emergency_score = clamp((emergency_months / emergency_target) * 100, 0, 100)
+
+    overall = (
+        emergency_score * 0.30 +
+        debt_score * 0.28 +
+        savings_rate_score * 0.22 +
+        housing_score * 0.20
+    )
+    overall = clamp(overall, 0, 100)
+
+    if overall < 40:
+        state = "critical"
+    elif overall < 60:
+        state = "vulnerable"
+    elif overall < 80:
+        state = "stable"
+    else:
+        state = "strong"
 
     return {
-        "fixed_expenses": fixed_expenses,
-        "disposable": disposable,
-        "suggested_savings": suggested_savings,
-        "spending_budget": spending_budget
+        "score": round2(overall),
+        "state": state,
+        "components": {
+            "savings_rate_pct": round2(percent(savings_rate)),
+            "debt_to_income_pct": round2(percent(debt_to_income)),
+            "housing_pct": round2(percent(housing_pct)),
+            "emergency_fund_months": round2(emergency_months),
+        }
     }
-
-
-def financial_wellbeing_score(income, debt, emergency_fund, savings, investments):
-    score = 0
-
-    # Debt-to-income
-    dti = debt / income
-    if dti < 0.1:
-        score += 30
-    elif dti < 0.3:
-        score += 20
-    elif dti < 0.5:
-        score += 10
-
-    # Emergency fund
-    months = emergency_fund / income
-    if months >= 6:
-        score += 40
-    elif months >= 3:
-        score += 25
-    else:
-        score += 10
-
-    # Savings rate
-    if savings / income >= 0.20:
-        score += 20
-    elif savings / income >= 0.10:
-        score += 10
-
-    # Investments
-    if investments > income * 6:
-        score += 10
-
-    return min(score, 100)
-
-
-def recommendation(score):
-    if score < 40:
-        return "Super Budget – focus on emergency savings and debt reduction."
-    elif score < 70:
-        return "Normal Budget – maintain stable savings and moderate spending."
-    else:
-        return "Relaxed Budget – you're in good shape! Invest and enjoy responsibly."
