@@ -1,101 +1,179 @@
-import gradio as gr
-import requests
+import streamlit as st
+import matplotlib.pyplot as plt
+#from finance_logic import compute_financial_score  
 
+# ---------------------------
+# Page Config
+# ---------------------------
+st.set_page_config(
+    page_title="FinancAI",
+    page_icon="💰",
+    layout="centered",
+)
 
-BACKEND_URL_SCORE = "http://127.0.0.1:8000/score"
-BACKEND_URL_CHAT = "http://127.0.0.1:8000/chat"
-
-
-def call_financial_score(monthly_income, fixed_expenses, variable_expenses,
-                         debt_monthly_payment, debt_total_balance,
-                         savings_monthly, savings_total, emergency_months_target):
-
-    payload = {
-        "monthly_income": monthly_income,
-        "fixed_expenses": fixed_expenses,
-        "variable_expenses": variable_expenses,
-        "debt_monthly_payment": debt_monthly_payment,
-        "debt_total_balance": debt_total_balance,
-        "savings_monthly": savings_monthly,
-        "savings_total": savings_total,
-        "emergency_months_target": emergency_months_target
+# ---------------------------
+# Custom CSS Styling
+# ---------------------------
+st.markdown("""
+<style>
+    .main { background-color: #f9f9f9; }
+    .section-box {
+        background-color: white;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.06);
+        margin-bottom: 20px;
     }
+    .stButton > button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 0.7rem 1.6rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 17px;
+    }
+    .stButton > button:hover {
+        background-color: #45a049;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-    try:
-        result = requests.post(BACKEND_URL_SCORE, json=payload).json()
-        return result
-    except Exception as e:
-        return {"error": f"Backend not reachable: {e}"}
+# ---------------------------
+# Session State Initialization
+# ---------------------------
+if "generated" not in st.session_state:
+    st.session_state.generated = False
 
+if "results" not in st.session_state:
+    st.session_state.results = None
 
-# ----------------------------- CHATBOT -----------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-def chatbot_reply(message, history):
+# ---------------------------
+# Header
+# ---------------------------
+st.title("💰 FinancAI — Your AI Financial Planner")
+st.write("Enter your financial details to generate a personalized breakdown and chat with your AI assistant.")
 
-    try:
-        response = requests.post(
-            BACKEND_URL_CHAT,
-            json={"message": message, "history": history}
-        ).json()
+# ============================================================
+# INPUT SECTION
+# ============================================================
+st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+st.header("📋 Financial Inputs")
 
-        reply = response.get("reply", "No response from chatbot.")
-        return reply
+# Currency
+currency = st.selectbox(
+    "Currency",
+    ["USD ($)", "EUR (€)", "GBP (£)", "CAD ($)", "AUD ($)", "JPY (¥)", "INR (₹)", "Other"]
+)
+if currency == "Other":
+    currency = st.text_input("Enter currency symbol or code:")
 
-    except Exception as e:
-        return f"Chat backend error: {e}"
+# Income
+income = st.number_input(f"Monthly Income ({currency})", min_value=0.0, step=100.0)
 
+#Fixed Expenses
+st.subheader("🏠 Fixed Expenses")
+fixed_categories = ["Rent", "Utilities", "Transportation", "Insurance", "Phone", "Internet", "Other"]
+fixed_expenses = {}
+fixed_count = st.number_input("Number of Fixed Expenses", min_value=0, max_value=20)
 
-# -------------------------------- UI --------------------------------------
-
-def build_ui():
-
-    with gr.Blocks() as demo:
-
-        gr.Markdown("# 💰 FinancAI — Your Personal Finance Dashboard")
-
-        with gr.Row():
-
-            with gr.Column(scale=1):
-                monthly_income = gr.Number(label="Monthly Income")
-                fixed_expenses = gr.Number(label="Fixed Expenses")
-                variable_expenses = gr.Number(label="Variable Expenses")
-                debt_payment = gr.Number(label="Debt Monthly Payment")
-                debt_balance = gr.Number(label="Debt Total Balance")
-                savings_monthly = gr.Number(label="Monthly Savings")
-                savings_total = gr.Number(label="Total Savings")
-                emergency_target = gr.Number(label="Emergency Fund Target (months)", value=3)
-
-                calculate_btn = gr.Button("Calculate Score")
-
-            with gr.Column(scale=1):
-                output_score = gr.JSON(label="Financial Score Output")
-
-        # Chatbot Section
-        gr.Markdown("## 🤖 Finance Chatbot")
-
-        chat_history = gr.Chatbot(label="Chat with FinancAI")
-        chat_input = gr.Textbox(label="Type your message…", placeholder="Ask anything about your finances!")
-
-        chat_input.submit(
-            lambda msg, hist: (hist + [[msg, chatbot_reply(msg, hist)]]),
-            [chat_input, chat_history],
-            [chat_history]
-        )
-
-        calculate_btn.click(
-            call_financial_score,
-            [
-                monthly_income, fixed_expenses, variable_expenses,
-                debt_payment, debt_balance, savings_monthly,
-                savings_total, emergency_target
-            ],
-            output_score
-        )
-
-    return demo
+for i in range(fixed_count):
+    colA, colB = st.columns(2)
+    cat = colA.selectbox(f"Category {i+1}", fixed_categories, key=f"fcat{i}")
+    amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"famt{i}")
+    fixed_expenses[cat] = amt
 
 
-app = build_ui()
+# Variable expenses
+st.subheader("🛒 Variable Expenses")
+variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Other (e.g., Smoking)"]
+variable_expenses = {}
+var_count = st.number_input("Number of Variable Expenses", min_value=0, max_value=20)
 
-if __name__ == "__main__":
-    app.launch()
+for i in range(var_count):
+    colA, colB = st.columns(2)
+    cat = colA.selectbox(f"Category {i+1}", variable_categories, key=f"vcat{i}")
+    amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"vamt{i}")
+    variable_expenses[cat] = amt
+
+# Debt & savings
+st.subheader("💳 Debt & Savings")
+monthly_debt = st.number_input(f"Monthly Debt Payments ({currency})", min_value=0.0, step=10.0)
+total_debt = st.number_input(f"Total Debt ({currency})", min_value=0.0, step=100.0)
+monthly_savings = st.number_input(f"Monthly Savings ({currency})", min_value=0.0, step=10.0)
+total_savings = st.number_input(f"Total Savings ({currency})", min_value=0.0, step=100.0)
+
+# Budget Style
+budget_type = st.radio("Budget Style", ["Super", "Normal", "Relaxed"])
+
+# End of input section box
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ============================================================
+# Generate Budget Button
+# ============================================================
+if st.button("✨ Generate Budget Plan"):
+    payload = {
+        "monthly_income": income,
+        "fixed_expenses": sum(fixed_expenses.values()),
+        "variable_expenses": sum(variable_expenses.values()),
+        "debt_monthly_payment": monthly_debt,
+        "debt_total_balance": total_debt,
+        "savings_monthly": monthly_savings,
+        "savings_total": total_savings,
+        "emergency_months_target": 3
+    }
+    results = compute_financial_score(payload)
+    st.session_state.results = results
+    st.session_state.generated = True
+    st.success("Your budget plan is ready! Scroll down 👇")
+
+# ============================================================
+# RESULTS SECTION 
+# ============================================================
+if st.session_state.generated and st.session_state.results:
+    results = st.session_state.results
+
+    # Financial Well-Being Score
+    st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+    st.header("📊 Financial Well-Being Score")
+    score = results["score"] / 100
+    st.progress(score)
+    st.write(f"**Score:** {results['score']} / 100 — *{results['state'].capitalize()}*")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Recommended Savings Chart
+    st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+    st.header("📈 Current vs Recommended Monthly Savings")
+    recommended_savings = monthly_savings + (results["score"] / 100) * 200  # example logic
+    fig, ax = plt.subplots()
+    ax.pie(
+        [monthly_savings, recommended_savings],
+        labels=["Current Savings", "Recommended Savings"],
+        autopct="%1.1f%%"
+    )
+    st.pyplot(fig)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ============================================================
+# CHATBOT 
+# ============================================================
+st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+st.header("🤖 AI Chatbot")
+
+# Display chat history
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+# Chat input
+user_message = st.chat_input("Ask something like: 'How can I improve my savings rate?'")
+if user_message:
+    st.session_state.messages.append({"role": "user", "content": user_message})
+    # Placeholder AI response
+    ai_response = "I'm analyzing your financial profile! (Backend response pending...)"
+    st.session_state.messages.append({"role": "assistant", "content": ai_response})
+    st.experimental_rerun()
+
+st.markdown("</div>", unsafe_allow_html=True)
