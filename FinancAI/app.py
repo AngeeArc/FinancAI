@@ -1,3 +1,4 @@
+#To run frontend --> open terminal --> cd FinancAI --> streamlit run app.py
 import streamlit as st
 import matplotlib.pyplot as plt
 #from finance_logic import compute_financial_score  
@@ -177,3 +178,4 @@ if user_message:
     st.experimental_rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
