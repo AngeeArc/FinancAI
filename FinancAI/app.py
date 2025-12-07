@@ -1,20 +1,22 @@
 #To run frontend --> open terminal --> cd FinancAI --> streamlit run app.py
 import streamlit as st
 import matplotlib.pyplot as plt
-#from finance_logic import compute_financial_score  
+import requests
 
-# ---------------------------
-# Page Config
-# ---------------------------
+# ============================================================
+# CONFIG
+# ============================================================
+BACKEND_URL = "http://localhost:8000/calculate-budget"   # Update if hosted
+
 st.set_page_config(
     page_title="FinancAI",
     page_icon="💰",
     layout="centered",
 )
 
-# ---------------------------
-# Custom CSS Styling
-# ---------------------------
+# ============================================================
+# STYLING
+# ============================================================
 st.markdown("""
 <style>
     .main { background-color: #f9f9f9; }
@@ -39,26 +41,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------
-# Session State Initialization
-# ---------------------------
-if "generated" not in st.session_state:
-    st.session_state.generated = False
-
+# ============================================================
+# SESSION STATE
+# ============================================================
 if "results" not in st.session_state:
     st.session_state.results = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------------------
-# Header
-# ---------------------------
+# ============================================================
+# HEADER
+# ============================================================
 st.title("💰 FinancAI — Your AI Financial Planner")
 st.write("Enter your financial details to generate a personalized breakdown and chat with your AI assistant.")
 
 # ============================================================
-# INPUT SECTION
+# INPUT FORM
 # ============================================================
 st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 st.header("📋 Financial Inputs")
@@ -74,7 +73,9 @@ if currency == "Other":
 # Income
 income = st.number_input(f"Monthly Income ({currency})", min_value=0.0, step=100.0)
 
-#Fixed Expenses
+# ---------------------------
+# FIXED EXPENSES
+# ---------------------------
 st.subheader("🏠 Fixed Expenses")
 fixed_categories = ["Rent", "Utilities", "Transportation", "Insurance", "Phone", "Internet", "Other"]
 fixed_expenses = {}
@@ -86,8 +87,9 @@ for i in range(fixed_count):
     amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"famt{i}")
     fixed_expenses[cat] = amt
 
-
-# Variable expenses
+# ---------------------------
+# VARIABLE EXPENSES
+# ---------------------------
 st.subheader("🛒 Variable Expenses")
 variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Other (e.g., Smoking)"]
 variable_expenses = {}
@@ -99,83 +101,106 @@ for i in range(var_count):
     amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"vamt{i}")
     variable_expenses[cat] = amt
 
-# Debt & savings
+# ---------------------------
+# DEBT & SAVINGS
+# ---------------------------
 st.subheader("💳 Debt & Savings")
 monthly_debt = st.number_input(f"Monthly Debt Payments ({currency})", min_value=0.0, step=10.0)
 total_debt = st.number_input(f"Total Debt ({currency})", min_value=0.0, step=100.0)
 monthly_savings = st.number_input(f"Monthly Savings ({currency})", min_value=0.0, step=10.0)
 total_savings = st.number_input(f"Total Savings ({currency})", min_value=0.0, step=100.0)
 
-# Budget Style
+# Budget mode
 budget_type = st.radio("Budget Style", ["Super", "Normal", "Relaxed"])
 
-# End of input section box
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
-# Generate Budget Button
+# GENERATE BUTTON → CALL BACKEND
 # ============================================================
 if st.button("✨ Generate Budget Plan"):
     payload = {
         "monthly_income": income,
         "fixed_expenses": sum(fixed_expenses.values()),
         "variable_expenses": sum(variable_expenses.values()),
+        "variable_breakdown": [
+            {"name": name, "amount": amount}
+            for name, amount in variable_expenses.items()
+        ],
         "debt_monthly_payment": monthly_debt,
         "debt_total_balance": total_debt,
         "savings_monthly": monthly_savings,
         "savings_total": total_savings,
-        "emergency_months_target": 3
+        "budget_mode": budget_type.lower()
     }
-    results = compute_financial_score(payload)
-    st.session_state.results = results
-    st.session_state.generated = True
-    st.success("Your budget plan is ready! Scroll down 👇")
+
+    try:
+        response = requests.post(BACKEND_URL, json=payload)
+        response.raise_for_status()
+        st.session_state.results = response.json()
+        st.success("Your budget plan is ready! Scroll down 👇")
+
+    except Exception as e:
+        st.error(f"Failed to connect to backend: {e}")
 
 # ============================================================
-# RESULTS SECTION 
+# RESULTS SECTION
 # ============================================================
-if st.session_state.generated and st.session_state.results:
+if st.session_state.results:
     results = st.session_state.results
 
-    # Financial Well-Being Score
+    # ---------------------------
+    # SCORE
+    # ---------------------------
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
     st.header("📊 Financial Well-Being Score")
-    score = results["score"] / 100
-    st.progress(score)
-    st.write(f"**Score:** {results['score']} / 100 — *{results['state'].capitalize()}*")
+
+    score_value = results["score"]
+    st.progress(score_value / 100)
+    st.write(f"**Score:** {score_value} / 100 — *{results['state'].capitalize()}*")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Recommended Savings Chart
+    # ---------------------------
+    # RECOMMENDED SAVINGS
+    # ---------------------------
     st.markdown("<div class='section-box'>", unsafe_allow_html=True)
     st.header("📈 Current vs Recommended Monthly Savings")
-    recommended_savings = monthly_savings + (results["score"] / 100) * 200  # example logic
+
+    recommended = results["recommended_savings"]
+
     fig, ax = plt.subplots()
     ax.pie(
-        [monthly_savings, recommended_savings],
+        [monthly_savings, recommended],
         labels=["Current Savings", "Recommended Savings"],
         autopct="%1.1f%%"
     )
     st.pyplot(fig)
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # ---------------------------
+    # RAW JSON
+    # ---------------------------
+    st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+    st.header("📄 Generated Budget JSON")
+    st.json(results)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # ============================================================
-# CHATBOT 
+# CHATBOT
 # ============================================================
 st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 st.header("🤖 AI Chatbot")
 
-# Display chat history
+# History
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# Chat input
+# Input
 user_message = st.chat_input("Ask something like: 'How can I improve my savings rate?'")
 if user_message:
     st.session_state.messages.append({"role": "user", "content": user_message})
-    # Placeholder AI response
-    ai_response = "I'm analyzing your financial profile! (Backend response pending...)"
+    ai_response = "I'm analyzing your financial profile! (Backend integration for chatbot is coming soon...)"
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
     st.experimental_rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
-
