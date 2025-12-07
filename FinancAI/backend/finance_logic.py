@@ -78,23 +78,76 @@ def compute_financial_score(payload: dict) -> dict:
         }
     }
 
-def generate_budget(payload: dict) -> dict:
+def generate_budget(payload: dict, mode: str = "normal") -> dict:
     """
-    Very simple budget placeholder.
+    Budget generator with 3 modes:
+      - "super"   : maximize savings (aggressive)
+      - "normal"  : balanced (default)
+      - "relaxed" : more spending, lower savings
+
+    Expected keys in payload:
+      - monthly_income
+      - fixed_expenses
+      - variable_expenses (current variable spending total)
+      - debt_monthly_payment
+      - savings_monthly (current savings)
     """
-    income = payload["monthly_income"]
-    fixed = payload["fixed_expenses"]
-    variable = payload["variable_expenses"]
-    debt = payload["debt_monthly_payment"]
-    savings = payload["savings_monthly"]
+
+    income = float(payload.get("monthly_income", 0) or 0)
+    fixed = float(payload.get("fixed_expenses", 0) or 0)
+    current_variable = float(payload.get("variable_expenses", 0) or 0)
+    debt = float(payload.get("debt_monthly_payment", 0) or 0)
+    current_savings = float(payload.get("savings_monthly", 0) or 0)
+
+    # Money left after fixed + debt (what can move between savings & variable)
+    flexible_pool = max(0.0, income - fixed - debt)
+
+    # Choose target savings rate by mode
+    mode = (mode or "normal").lower()
+    if mode == "super":
+        target_savings_rate = 0.30   # aim for 30% of income saved
+    elif mode == "relaxed":
+        target_savings_rate = 0.10   # ~10% savings
+    else:
+        mode = "normal"
+        target_savings_rate = 0.20   # ~20% savings
+
+    ideal_savings = income * target_savings_rate
+
+    # not let savings exceed flexible_pool
+    if ideal_savings > flexible_pool:
+        # If target is too high, save ~60% of flexible_pool, 40% stays variable
+        recommended_savings = flexible_pool * 0.6
+    else:
+        recommended_savings = ideal_savings
+
+    recommended_savings = clamp(recommended_savings, 0.0, flexible_pool)
+    recommended_variable = max(0.0, flexible_pool - recommended_savings)
+
+    # Leftover if anything remains unallocated
+    total_planned = fixed + debt + recommended_savings + recommended_variable
+    leftover = max(0.0, income - total_planned)
+
+    # Changes vs current behaviour
+    savings_change = recommended_savings - current_savings
+    variable_change = recommended_variable - current_variable
 
     return {
-        "mode": "normal",
-        "categories": {
-            "housing_and_fixed": fixed,
-            "variable_spending": variable,
-            "debt_payments": debt,
-            "savings": savings,
-            "leftover": income - (fixed + variable + debt + savings)
+        "mode": mode,
+        "totals": {
+            "income": round2(income),
+            "fixed": round2(fixed),
+            "debt": round2(debt),
+            "recommended_savings": round2(recommended_savings),
+            "recommended_variable": round2(recommended_variable),
+            "leftover": round2(leftover),
+        },
+        "deltas": {
+            "savings_change": round2(savings_change),
+            "variable_change": round2(variable_change),
+        },
+        "meta": {
+            "flexible_pool": round2(flexible_pool),
+            "target_savings_rate_pct": round2(percent(target_savings_rate)),
         }
     }
