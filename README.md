@@ -1,2 +1,7 @@
-Backend start: uvicorn main:app --reload or uvicorn backend.main:app --reload
-frontend start: streamlit run app.py
+# FinancAI
+
+## How to Start
+
+Step 1: Download everything from requirements.txt 
+sss 
+sssss
