@@ -6,7 +6,7 @@ download everything from requirements.txt
 
 ## Testing the Backend
 
-open a terminal in the backend folder and enter: ``set GROQ_API_KEY=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 echo %GROQ_API_KEY%`` or ``export GROQ_API_KEY=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``
+open a terminal in the backend folder and enter: ``set GROQ_API_KEY=your key`` or ``export GROQ_API_KEY=your key``
 
 type in ``uvicorn main:app --reload`` and run
 
