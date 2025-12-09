@@ -10,7 +10,7 @@ open a terminal in the backend folder and enter: ``set GROQ_API_KEY=your key`` o
 
 type in ``uvicorn main:app --reload`` and run
 
-assuming no error occurs, you should see an IP Address ``http://127.0.0.1:8000`` where you can test the backend out. To actually see the contents of the backend go to http://127.0.0.1:8000/docs#/ 
+assuming no error occurs, you should see an IP Address ``http://127.0.0.1:8000`` where you can test the backend out. To actually see the contents of the backend go to ``http://127.0.0.1:8000/docs#/`` 
 
 ## Opening the frontend
 
