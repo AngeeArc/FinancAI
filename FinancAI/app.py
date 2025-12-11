@@ -91,7 +91,7 @@ for i in range(fixed_count):
 # VARIABLE EXPENSES
 # ---------------------------
 st.subheader("🛒 Variable Expenses")
-variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Other (e.g., Smoking)"]
+variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Other (e.g. Smoking, Coffee, Eating Out)"]
 variable_expenses = {}
 var_count = st.number_input("Number of Variable Expenses", min_value=0, max_value=20)
 
@@ -204,3 +204,4 @@ if user_message:
     st.experimental_rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
