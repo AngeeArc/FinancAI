@@ -1,4 +1,3 @@
-#To run frontend --> open terminal --> cd FinancAI --> streamlit run app.py
 import streamlit as st
 import matplotlib.pyplot as plt
 import requests
@@ -62,58 +61,66 @@ st.write("Enter your financial details to generate a personalized breakdown and 
 st.markdown("<div class='section-box'>", unsafe_allow_html=True)
 st.header("📋 Financial Inputs")
 
-# Currency
-currency = st.selectbox(
-    "Currency",
-    ["USD ($)", "EUR (€)", "GBP (£)", "CAD ($)", "AUD ($)", "JPY (¥)", "INR (₹)", "Other"]
-)
-if currency == "Other":
-    currency = st.text_input("Enter currency symbol or code:")
-
-# Income
-income = st.number_input(f"Monthly Income ({currency})", min_value=0.0, step=100.0)
+# Create two main columns
+left, right = st.columns(2)
 
 # ---------------------------
-# FIXED EXPENSES
+# LEFT COLUMN
 # ---------------------------
-st.subheader("🏠 Fixed Expenses")
-fixed_categories = ["Rent", "Utilities", "Transportation", "Insurance", "Phone", "Internet", "Other"]
-fixed_expenses = {}
-fixed_count = st.number_input("Number of Fixed Expenses", min_value=0, max_value=20)
+with left:
 
-for i in range(fixed_count):
-    colA, colB = st.columns(2)
-    cat = colA.selectbox(f"Category {i+1}", fixed_categories, key=f"fcat{i}")
-    amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"famt{i}")
-    fixed_expenses[cat] = amt
+    # Currency
+    currency = st.selectbox(
+        "Currency",
+        ["USD ($)", "EUR (€)", "GBP (£)", "CAD ($)", "AUD ($)", "JPY (¥)", "INR (₹)", "Other"]
+    )
+    if currency == "Other":
+        currency = st.text_input("Enter currency symbol or code:")
+
+    # Income
+    income = st.number_input(f"Monthly Income {currency}", min_value=0.0, step=100.0)
+
+    # ---------------------------
+    # FIXED EXPENSES
+    # ---------------------------
+    st.subheader("🏠 Fixed Expenses")
+    fixed_categories = ["Rent", "Utilities", "Transportation", "Insurance", "Phone", "Internet", "Other"]
+    fixed_expenses = {}
+    fixed_count = st.number_input("Number of Fixed Expenses", min_value=0, max_value=20, key="fixed_count")
+
+    for i in range(fixed_count):
+        colA, colB = st.columns(2)
+        cat = colA.selectbox(f"Category {i+1}", fixed_categories, key=f"fcat{i}")
+        amt = colB.number_input(f"Amount {i+1} {currency}", min_value=0.0, step=10.0, key=f"famt{i}")
+        fixed_expenses[cat] = amt
+
+    # ---------------------------
+    # VARIABLE EXPENSES
+    # ---------------------------
+    st.subheader("🛒 Variable Expenses")
+    variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Type Other Variable Here (e.g. Smoking, Coffee, Eating Out)"]
+    variable_expenses = {}
+    var_count = st.number_input("Number of Variable Expenses", min_value=0, max_value=20, key="var_count")
+
+    for i in range(var_count):
+        colA, colB = st.columns(2)
+        cat = colA.selectbox(f"Category {i+1}", variable_categories, key=f"vcat{i}")
+        amt = colB.number_input(f"Amount {i+1} {currency}", min_value=0.0, step=10.0, key=f"vamt{i}")
+        variable_expenses[cat] = amt
+
 
 # ---------------------------
-# VARIABLE EXPENSES
+# RIGHT COLUMN
 # ---------------------------
-st.subheader("🛒 Variable Expenses")
-variable_categories = ["Groceries", "Hobbies", "Entertainment", "Subscriptions", "Type Other Variable Here (e.g. Smoking, Coffee, Eating Out)"]
-variable_expenses = {}
-var_count = st.number_input("Number of Variable Expenses", min_value=0, max_value=20)
+with right:
 
-for i in range(var_count):
-    colA, colB = st.columns(2)
-    cat = colA.selectbox(f"Category {i+1}", variable_categories, key=f"vcat{i}")
-    amt = colB.number_input(f"Amount {i+1} ({currency})", min_value=0.0, step=10.0, key=f"vamt{i}")
-    variable_expenses[cat] = amt
+    st.subheader("💳 Debt")
+    monthly_debt = st.number_input(f"Monthly Debt Payments {currency}", min_value=0.0, step=10.0)
+    total_debt = st.number_input(f"Total Debt {currency}", min_value=0.0, step=100.0)
 
-# ---------------------------
-# DEBT & SAVINGS
-# ---------------------------
-st.subheader("💳 Debt & Savings")
-monthly_debt = st.number_input(f"Monthly Debt Payments ({currency})", min_value=0.0, step=10.0)
-total_debt = st.number_input(f"Total Debt ({currency})", min_value=0.0, step=100.0)
-monthly_savings = st.number_input(f"Monthly Savings ({currency})", min_value=0.0, step=10.0)
-total_savings = st.number_input(f"Total Savings ({currency})", min_value=0.0, step=100.0)
-
-# Budget mode
-budget_type = st.radio("Budget Style", ["Super", "Normal", "Relaxed"])
-
-st.markdown("</div>", unsafe_allow_html=True)
+    st.subheader("💵 Savings")
+    monthly_savings = st.number_input(f"Monthly Savings {currency}", min_value=0.0, step=10.0)
+    total_savings = st.number_input(f"Total Savings {currency}", min_value=0.0, step=100.0)
 
 # ============================================================
 # GENERATE BUTTON → CALL BACKEND
@@ -142,6 +149,11 @@ if st.button("✨ Generate Budget Plan"):
 
     except Exception as e:
         st.error(f"Failed to connect to backend: {e}")
+
+# Budget mode
+budget_type = st.radio("Budget Style", ["Super", "Normal", "Relaxed"])
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
 # RESULTS SECTION
@@ -204,5 +216,3 @@ if user_message:
     st.experimental_rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
-
-
