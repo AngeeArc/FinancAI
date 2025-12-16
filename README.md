@@ -1,9 +1,9 @@
 # FinancAI
 Roles: 
-Backend - Ryan
-Frontend - Angee
-Integration - Koen
-Documentation - El
+- Backend - Ryan, 
+- Frontend - Angee,
+- Integration - Koen,
+- Documentation - El
 
 # FinancAI — AI-Assisted Budgeting & Financial Health Analyzer
 
