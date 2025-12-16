@@ -15,6 +15,7 @@ It helps users:
 - See a financial health score with clear reasoning
 - Receive human-readable AI explanations of their situation
 
+# Chatgpt was used to help with the development and repairation of the code
 ---
 
 
@@ -127,4 +128,3 @@ This endpoint:
   "budget_mode": "normal"
 }
 
-# Chatgpt was used to help with the development and repairation of the code
