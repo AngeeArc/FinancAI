@@ -82,9 +82,6 @@ When the user clicks **“Generate Budget Plan”**:
    - Savings comparison chart
    - Raw JSON output (for transparency)
 
-### Chatbot UI
-A chatbot interface exists in the UI, but it is currently a **placeholder**.  
-Backend chatbot integration is planned but not yet wired to the UI.
 
 ---
 
