@@ -1,5 +1,5 @@
 # FinancAI
-Roles: 
+Group Distribution: 
 - Backend - Ryan, 
 - Frontend - Angee,
 - Integration - Koen,
@@ -127,3 +127,4 @@ This endpoint:
   "budget_mode": "normal"
 }
 
+# Chatgpt was used to help with the development and repairation of the code
