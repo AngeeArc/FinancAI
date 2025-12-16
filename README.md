@@ -15,7 +15,7 @@ It helps users:
 - See a financial health score with clear reasoning
 - Receive human-readable AI explanations of their situation
 
-**Disclaimer: Chatgpt was used to help with the development and repairation of the code
+*Disclaimer: Chatgpt was used to help with the development and repairation of the code
 ---
 
 
