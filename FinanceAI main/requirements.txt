@@ -1,0 +1,10 @@
+streamlit
+yfinance
+openai
+python-dotenv
+pandas
+numpy
+groq
+pydantic
+uvicorn
+matplotlib
