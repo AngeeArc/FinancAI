@@ -244,7 +244,7 @@ with section_box():
             "budget_mode": budget_type.lower(),
         }
 
-        # ✅ backend expects savings_goal_cost + optional savings_goal_months
+        # backend expects savings_goal_cost + optional savings_goal_months
         if enable_goal and goal_amount > 0:
             payload["savings_goal_cost"] = float(goal_amount)
 
@@ -264,7 +264,7 @@ with section_box():
             st.session_state.latest_financial_data = data
             st.session_state.plan_id = data.get("plan_id")
 
-            # ✅ reset chat when budget changes
+            # reset chat when budget changes
             if st.session_state.budget_fingerprint != new_fp:
                 st.session_state.messages = []
                 st.session_state.budget_fingerprint = new_fp
@@ -322,13 +322,13 @@ if st.session_state.results:
         st.table(df_totals)
 
        # ======================================================
-        # ✅ SAVINGS GOAL (deterministic display, months optional)
+        #  SAVINGS GOAL (deterministic display, months optional)
         # ======================================================
         savings_goal = results.get("savings_goal") or {}
         if savings_goal.get("enabled"):
             st.subheader("🎯 Savings Goal (based on your plan)")
 
-            # ✅ NEW: show what you're saving for (if provided)
+            #show what you're saving for (if provided)
             goal_name = (savings_goal.get("goal_name") or "").strip()
             if goal_name:
                 st.write(f"**Saving for:** {goal_name}")
@@ -450,3 +450,4 @@ if user_message:
 
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
     st.rerun()
+
