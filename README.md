@@ -30,6 +30,7 @@ download everything from requirements.txt
 
 
 ## Testing the Backend
+visit https://groq.com/ to generate a free API key
 
 open a terminal in the backend folder and enter: ``set GROQ_API_KEY=your key`` or ``export GROQ_API_KEY=your key``
 
