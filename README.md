@@ -15,8 +15,6 @@ It helps users:
 - See a financial health score with clear reasoning
 - Receive human-readable AI explanations of their situation
 
-Disclaimer: Chatgpt was used for the development and repairation of the code
-
 ---
 
 
@@ -75,6 +73,7 @@ The user provides:
 - Variable expenses (dynamic list + category breakdown)
 - Monthly and total debt
 - Monthly and total savings
+- Savings Goals (optional)
 - Budget style:
   - **Super** (aggressive saving)
   - **Normal** (balanced)
@@ -240,3 +239,26 @@ ChatGPT was used during development for:
 - Refactoring and documentation
 
 All financial logic, formulas, and validation rules were explicitly designed and reviewed by the development team.
+
+---
+
+### Ethical, Legal & Regulatory Considerations
+
+
+### Data Protection (GDPR)
+FinancAI processes only user-provided financial inputs and does not store, track, or persist personal data beyond the active session. All data is processed locally or in-memory for the sole purpose of generating results. No data is intentionally logged or retained by FinancAI after processing.
+
+For AI-generated explanations, relevant input data is temporarily transmitted to the Groq API to produce natural-language output.
+
+
+### AI Act
+FinancAI uses AI only for explanatory text. All financial calculations, scores, and recommendations are generated using deterministic, rule-based logic.
+
+The AI does not make decisions, perform profiling, or generate financial figures. The system is intended as a low-risk, AI-assisted informational tool.
+
+
+### Open-Source & Usage
+This project was developed as part of an academic course. No explicit open-source license is provided.
+
+The code is shared for educational and review purposes only and is not intended for commercial use.
+
