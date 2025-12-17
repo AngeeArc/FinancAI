@@ -67,6 +67,7 @@ The frontend is built using **Streamlit**.
 
 ### User Inputs
 The user provides:
+- Country of Residence
 - Currency
 - Monthly income
 - Fixed expenses (dynamic list)
@@ -85,9 +86,11 @@ When the user clicks **“Generate Budget Plan”**:
 2. Payload is sent to the backend via `POST`
 3. Backend response is stored in `st.session_state.results`
 4. Results are displayed:
-   - Financial score + state
-   - Savings comparison chart
-   - Raw JSON output (for transparency)
+   - Financial Well-Being Score
+   - Budget Plan
+   - Savings Goal
+   - Investing Readiness
+   - Personalized Advice
 
 
 ---
