@@ -5,7 +5,7 @@ Group Distribution:
 - Integration - Koen,
 - Documentation - El
 
-# FinancAI — AI-Assisted Budgeting & Financial Health Analyzer
+---
 
 FinancAI is a personal finance planning tool that combines **deterministic financial logic** with **AI-generated explanations**.
 
